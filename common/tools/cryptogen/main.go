@@ -218,6 +218,7 @@ func main() {
 
 	// "generate" command
 	case gen.FullCommand():
+		fmt.Println("生成支持SM2的证书")
 		generate()
 
 	case ext.FullCommand():

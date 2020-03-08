@@ -150,7 +150,7 @@ func (ki *x509PublicKeyImportOptsKeyImporter) KeyImport(raw interface{}, opts bc
 
 	switch pk.(type) {
 	case sm2.PublicKey:
-		fmt.Printf("bccsp gm keyimport pk is sm2.PublicKey")
+		fmt.Printf(" pk is sm2.PublicKey")
 		sm2PublickKey, ok := pk.(sm2.PublicKey)
 		if !ok {
 			return nil, errors.New("Parse interface []  to sm2 pk error")
@@ -164,7 +164,7 @@ func (ki *x509PublicKeyImportOptsKeyImporter) KeyImport(raw interface{}, opts bc
 			der,
 			&bccsp.GMSM2PublicKeyImportOpts{Temporary: opts.Ephemeral()})
 	case *sm2.PublicKey:
-		fmt.Printf("bccsp gm keyimport pk is *sm2.PublicKey")
+		fmt.Printf(" pk is *sm2.PublicKey")
 		sm2PublickKey, ok := pk.(*sm2.PublicKey)
 		if !ok {
 			return nil, errors.New("Parse interface []  to sm2 pk error")
@@ -218,17 +218,7 @@ func (*gmsm2PrivateKeyImportOptsKeyImporter) KeyImport(raw interface{}, opts bcc
 		return nil, errors.New("[GMSM2PrivateKeyImportOpts] Invalid raw. It must not be nil.")
 	}
 
-	// lowLevelKey, err := utils.DERToPrivateKey(der)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Failed converting PKIX to GMSM2 public key [%s]", err)
-	// }
 
-	// gmsm2SK, ok := lowLevelKey.(*sm2.PrivateKey)
-	// if !ok {
-	// 	return nil, errors.New("Failed casting to GMSM2 private key. Invalid raw material.")
-	// }
-
-	//gmsm2SK, err :=  sm2.ParseSM2PrivateKey(der)
 	gmsm2SK, err := sm2.ParsePKCS8UnecryptedPrivateKey(der)
 
 	if err != nil {
@@ -250,15 +240,7 @@ func (*gmsm2PublicKeyImportOptsKeyImporter) KeyImport(raw interface{}, opts bccs
 		return nil, errors.New("[GMSM2PublicKeyImportOpts] Invalid raw. It must not be nil.")
 	}
 
-	// lowLevelKey, err := utils.DERToPrivateKey(der)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Failed converting PKIX to GMSM2 public key [%s]", err)
-	// }
 
-	// gmsm2SK, ok := lowLevelKey.(*sm2.PrivateKey)
-	// if !ok {
-	// 	return nil, errors.New("Failed casting to GMSM2 private key. Invalid raw material.")
-	// }
 
 	gmsm2SK, err := sm2.ParseSm2PublicKey(der)
 	if err != nil {

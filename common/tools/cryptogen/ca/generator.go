@@ -12,7 +12,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"fmt"
+	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
 	"io/ioutil"
 	"math/big"
 	"net"
@@ -24,7 +24,6 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/gm"
 	"github.com/hyperledger/fabric/bccsp/utils"
-	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
 	"github.com/tjfoc/gmsm/sm2"
 )
 
@@ -91,8 +90,6 @@ func NewCA(baseDir, org, name, country, province, locality, orgUnit, streetAddre
 				if err == nil {
 					ca = &CA{
 						Name: name,
-						//Signer:             signer,
-						//SignCert:           x509Cert,
 						Country:            country,
 						Province:           province,
 						Locality:           locality,
@@ -139,8 +136,8 @@ func (ca *CA) SignCertificate(baseDir, name string, ous, sans []string, pub *sm2
 	// cert, err := genCertificateECDSA(baseDir, name, &template, ca.SignCert,
 	// 	pub, ca.Signer)
 
-	sm2Tpl := gm.ParseX509Certificate2Sm2(&template)
-	cert, err := genCertificateGMSM2(baseDir, name, sm2Tpl, ca.SignSm2Cert, pub, ca.Sm2Key)
+	temp := gm.ParseX509Certificate2Sm2(&template)
+	cert, err := genCertificateGMSM2(baseDir, name, temp, ca.SignSm2Cert, pub, ca.Sm2Key)
 
 	if err != nil {
 		return nil, err
@@ -264,7 +261,6 @@ func LoadCertificateECDSA(certPath string) (*x509.Certificate, error) {
 //generate a signed X509 certficate using GMSM2
 func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate, pub *sm2.PublicKey,
 	key bccsp.Key) (*sm2.Certificate, error) {
-	fmt.Println("hehehehe", template.PublicKey.(*sm2.PublicKey))
 	//create the x509 public cert
 	certBytes, err := gm.CreateCertificateToMem(template, parent, key)
 
@@ -275,20 +271,9 @@ func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate
 	//write cert out to file
 	fileName := filepath.Join(baseDir, name+"-cert.pem")
 	err = ioutil.WriteFile(fileName, certBytes, os.FileMode(0666))
-
-	// certFile, err := os.Create(fileName)
 	if err != nil {
 		return nil, err
 	}
-
-	// //pem encode the cert
-	// err = pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
-	// certFile.Close()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	//x509Cert, err := sm2.ReadCertificateFromPem(fileName)
-
 	x509Cert, err := sm2.ReadCertificateFromMem(certBytes)
 	if err != nil {
 		return nil, err
@@ -296,6 +281,7 @@ func genCertificateGMSM2(baseDir, name string, template, parent *sm2.Certificate
 	return x509Cert, nil
 
 }
+
 
 // LoadCertificateGMSM2 load a ecdsa cert from a file in cert path
 func LoadCertificateGMSM2(certPath string) (*sm2.Certificate, error) {

@@ -398,3 +398,30 @@ func compare(this, that bccsp.Key) bool {
 
 	return reflect.DeepEqual(this, that)
 }
+
+//gmsm4_encrypt_entity
+/*func NewGMSM4EncrypterEntity(ID string, b bccsp.BCCSP, key []byte) (*BCCSPEncrypterEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	k, err := b.KeyImport(key, &bccsp.GMSM4ImportKeyOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewEncrypterEntity(ID, b, k, nil, nil)
+}*/
+
+func NewGMSM4EncrypterEntity(ID string, b bccsp.BCCSP, key, IV []byte) (*BCCSPEncrypterEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	k, err := b.KeyImport(key, &bccsp.GMSM4ImportKeyOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewEncrypterEntity(ID, b, k, &bccsp.SM4CBCModeOpts{IV: IV}, &bccsp.SM4CBCModeOpts{IV: IV})
+}

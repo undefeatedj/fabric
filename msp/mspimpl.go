@@ -592,7 +592,7 @@ func (msp *bccspmsp) getCertificationChainForBCCSPIdentity(id *identity) ([]*sm2
 
 	// CAs cannot be directly used as identities..
 	if id.cert.IsCA {
-		return nil, errors.New("An X509 certificate with Basic Constraint: " +
+		return nil, errors.New("An SM2 certificate with Basic Constraint: " +
 			"Certificate Authority equals true cannot be used as an identity")
 	}
 

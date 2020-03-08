@@ -37,9 +37,10 @@ func (t *EncCC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 // transient field
 func (t *EncCC) Encrypter(stub shim.ChaincodeStubInterface, args []string, encKey, IV []byte) pb.Response {
 	// create the encrypter entity - we give it an ID, the bccsp instance, the key and (optionally) the IV
-	ent, err := entities.NewAES256EncrypterEntity("ID", t.bccspInst, encKey, IV)
+	//ent, err := entities.NewAES256EncrypterEntity("ID", t.bccspInst, encKey, IV)
+	ent, err := entities.NewGMSM4EncrypterEntity("ID", t.bccspInst, encKey,IV)
 	if err != nil {
-		return shim.Error(fmt.Sprintf("entities.NewAES256EncrypterEntity failed, err %s", err))
+		return shim.Error(fmt.Sprintf("entities.NewGMSM4EncrypterEntity failed, err %s", err))
 	}
 
 	if len(args) != 2 {
@@ -47,7 +48,11 @@ func (t *EncCC) Encrypter(stub shim.ChaincodeStubInterface, args []string, encKe
 	}
 
 	key := args[0]
+
 	cleartextValue := []byte(args[1])
+	//这里需要一个hash函数可以把任意长度的消息哈希成16byte
+	//cleartextValue := []byte("1234567890123456")
+
 
 	// here, we encrypt cleartextValue and assign it to key
 	err = encryptAndPutState(stub, ent, key, cleartextValue)
@@ -61,9 +66,9 @@ func (t *EncCC) Encrypter(stub shim.ChaincodeStubInterface, args []string, encKe
 // bit key that has been provided to the chaincode through the transient field.
 func (t *EncCC) Decrypter(stub shim.ChaincodeStubInterface, args []string, decKey, IV []byte) pb.Response {
 	// create the encrypter entity - we give it an ID, the bccsp instance, the key and (optionally) the IV
-	ent, err := entities.NewAES256EncrypterEntity("ID", t.bccspInst, decKey, IV)
+	ent, err := entities.NewGMSM4EncrypterEntity("ID", t.bccspInst, decKey,IV)
 	if err != nil {
-		return shim.Error(fmt.Sprintf("entities.NewAES256EncrypterEntity failed, err %s", err))
+		return shim.Error(fmt.Sprintf("entities.NewGMSM4EncrypterEntity failed, err %s", err))
 	}
 
 	if len(args) != 1 {
@@ -137,9 +142,9 @@ func (t *EncCC) DecrypterVerify(stub shim.ChaincodeStubInterface, args []string,
 // entity directly to decrypt previously encrypted key-value pairs
 func (t *EncCC) RangeDecrypter(stub shim.ChaincodeStubInterface, decKey []byte) pb.Response {
 	// create the encrypter entity - we give it an ID, the bccsp instance and the key
-	ent, err := entities.NewAES256EncrypterEntity("ID", t.bccspInst, decKey, nil)
+	ent, err := entities.NewGMSM4EncrypterEntity("ID", t.bccspInst, decKey,nil)
 	if err != nil {
-		return shim.Error(fmt.Sprintf("entities.NewAES256EncrypterEntity failed, err %s", err))
+		return shim.Error(fmt.Sprintf("entities.NewGMSM4EncrypterEntity failed, err %s", err))
 	}
 
 	bytes, err := getStateByRangeAndDecrypt(stub, ent, "", "")

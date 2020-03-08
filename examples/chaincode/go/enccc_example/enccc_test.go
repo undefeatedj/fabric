@@ -2,8 +2,10 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
+	"fmt"
+	"github.com/tjfoc/gmsm/sm4"
 	"testing"
+	"time"
 
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -11,6 +13,8 @@ import (
 )
 
 const (
+
+
 	AESKEY1   = "01234567890123456789012345678901"
 	AESKEY2   = "01234567890123456789012345678902"
 	ECDSAKEY1 = `-----BEGIN EC PRIVATE KEY-----
@@ -57,7 +61,7 @@ func TestInvoke(t *testing.T) {
 	assert.NotEqual(t, res.Status, int32(shim.OK))
 }
 
-func TestEnc(t *testing.T) {
+/*func TestEnc(t *testing.T) {
 	factory.InitFactories(nil)
 
 	scc := &EncCC{factory.GetDefault()}
@@ -161,9 +165,9 @@ func TestSig(t *testing.T) {
 	stub.MockTransactionEnd("a")
 	assert.Equal(t, res.Status, int32(shim.OK))
 	assert.True(t, bytes.Equal(res.Payload, []byte("value")))
-}
+}*/
 
-func TestEncCC_RangeDecrypter(t *testing.T) {
+/*func TestEncCC_RangeDecrypter(t *testing.T) {
 	factory.InitFactories(nil)
 
 	scc := &EncCC{factory.GetDefault()}
@@ -231,4 +235,34 @@ func TestDeterministicEncryption(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, c1)
 	assert.True(t, bytes.Equal(c1, c2))
+}*/
+
+//test gmsm4_cbc_encrypt_enccc_example
+func TestGMSM4CBCEnc(t *testing.T) {
+	t1 := time.Now()
+	factory.InitFactories(nil)
+
+	scc := &EncCC{factory.GetDefault()}
+	stub := shim.NewMockStub("enccc", scc)
+
+	// GMSM4ENCRYPTION test
+	stub.MockTransactionStart("a")
+	iv := make([]byte, sm4.BlockSize)
+	res := scc.Encrypter(stub, []string{"key", "software of tongji university"}, []byte("1234567890abcdef"),iv)
+	stub.MockTransactionEnd("a")
+	assert.Equal(t, res.Status, int32(shim.OK))
+
+
+	// GMSM4DECRPTION test
+	stub.MockTransactionStart("a")
+	res = scc.Decrypter(stub, []string{"key"}, []byte("1234567890abcdef"),iv)
+	stub.MockTransactionEnd("a")
+	assert.Equal(t, res.Status, int32(shim.OK))
+	assert.True(t, bytes.Equal(res.Payload, []byte("software of tongji university")))
+    t2 := time.Now()
+    time_cost := t2.Sub(t1)
+    fmt.Println(time_cost)
+
+
+
 }

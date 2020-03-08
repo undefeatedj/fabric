@@ -17,13 +17,16 @@ package gmtls
 
 import (
 	"bytes"
-	"crypto/aes"
+	//"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
 	"io"
+
+	//"fmt"
+	"github.com/tjfoc/gmsm/sm4"
 )
 
 // sessionState contains the information that is serialized into a session
@@ -142,9 +145,12 @@ func (s *sessionState) unmarshal(data []byte) bool {
 
 func (c *Conn) encryptTicket(state *sessionState) ([]byte, error) {
 	serialized := state.marshal()
-	encrypted := make([]byte, ticketKeyNameLen+aes.BlockSize+len(serialized)+sha256.Size)
+	//encrypted := make([]byte, ticketKeyNameLen+aes.BlockSize+len(serialized)+sha256.Size)
+	encrypted := make([]byte, ticketKeyNameLen+sm4.BlockSize+len(serialized)+sha256.Size)
+	//fmt.Println("SM4SM4SM4")
 	keyName := encrypted[:ticketKeyNameLen]
-	iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+aes.BlockSize]
+	//iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+aes.BlockSize]
+	iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+sm4.BlockSize]
 	macBytes := encrypted[len(encrypted)-sha256.Size:]
 
 	if _, err := io.ReadFull(c.config.rand(), iv); err != nil {
@@ -152,11 +158,13 @@ func (c *Conn) encryptTicket(state *sessionState) ([]byte, error) {
 	}
 	key := c.config.ticketKeys()[0]
 	copy(keyName, key.keyName[:])
-	block, err := aes.NewCipher(key.aesKey[:])
+	//block, err := aes.NewCipher(key.aesKey[:])
+	block, err := sm4.NewCipher(key.aesKey[:])
 	if err != nil {
 		return nil, errors.New("tls: failed to create cipher while encrypting ticket: " + err.Error())
 	}
-	cipher.NewCTR(block, iv).XORKeyStream(encrypted[ticketKeyNameLen+aes.BlockSize:], serialized)
+	//cipher.NewCTR(block, iv).XORKeyStream(encrypted[ticketKeyNameLen+aes.BlockSize:], serialized)
+	cipher.NewCTR(block, iv).XORKeyStream(encrypted[ticketKeyNameLen+sm4.BlockSize:], serialized)
 
 	mac := hmac.New(sha256.New, key.hmacKey[:])
 	mac.Write(encrypted[:len(encrypted)-sha256.Size])
@@ -166,13 +174,17 @@ func (c *Conn) encryptTicket(state *sessionState) ([]byte, error) {
 }
 
 func (c *Conn) decryptTicket(encrypted []byte) (*sessionState, bool) {
-	if c.config.SessionTicketsDisabled ||
+	/*if c.config.SessionTicketsDisabled ||
 		len(encrypted) < ticketKeyNameLen+aes.BlockSize+sha256.Size {
 		return nil, false
+	}*/
+	if c.config.SessionTicketsDisabled ||
+		len(encrypted) < ticketKeyNameLen+sm4.BlockSize+sha256.Size {
+		return nil, false
 	}
-
 	keyName := encrypted[:ticketKeyNameLen]
-	iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+aes.BlockSize]
+	//iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+aes.BlockSize]
+	iv := encrypted[ticketKeyNameLen : ticketKeyNameLen+sm4.BlockSize]
 	macBytes := encrypted[len(encrypted)-sha256.Size:]
 
 	keys := c.config.ticketKeys()
@@ -197,11 +209,13 @@ func (c *Conn) decryptTicket(encrypted []byte) (*sessionState, bool) {
 		return nil, false
 	}
 
-	block, err := aes.NewCipher(key.aesKey[:])
+	//block, err := aes.NewCipher(key.aesKey[:])
+	block, err := sm4.NewCipher(key.aesKey[:])
 	if err != nil {
 		return nil, false
 	}
-	ciphertext := encrypted[ticketKeyNameLen+aes.BlockSize : len(encrypted)-sha256.Size]
+	//ciphertext := encrypted[ticketKeyNameLen+aes.BlockSize : len(encrypted)-sha256.Size]
+	ciphertext := encrypted[ticketKeyNameLen+sm4.BlockSize : len(encrypted)-sha256.Size]
 	plaintext := ciphertext
 	cipher.NewCTR(block, iv).XORKeyStream(plaintext, ciphertext)
 

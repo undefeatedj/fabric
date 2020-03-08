@@ -135,21 +135,21 @@ func GetECPublicKey(priv bccsp.Key) (*ecdsa.PublicKey, error) {
 func GetSM2PublicKey(priv bccsp.Key) (*sm2.PublicKey, error) {
 
 	// get the public key
-	pubKey, err := priv.PublicKey()
+	pk, err := priv.PublicKey()
 	if err != nil {
 		return nil, err
 	}
 
 	// marshal to bytes
-	pubKeyBytes, err := pubKey.Bytes()
+	pkb, err := pk.Bytes()
 	if err != nil {
 		return nil, err
 	}
 	// unmarshal using pkix
-	sm2PubKey, err := sm2.ParseSm2PublicKey(pubKeyBytes)
+	sm2pk, err := sm2.ParseSm2PublicKey(pkb)
 	//ecPubKey, err := x509.ParsePKIXPublicKey(pubKeyBytes)
 	if err != nil {
 		return nil, err
 	}
-	return sm2PubKey, nil
+	return sm2pk, nil
 }

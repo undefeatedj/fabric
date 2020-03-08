@@ -8,7 +8,9 @@ package msp
 
 import (
 	"crypto"
+	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/rsa"
 	"encoding/hex"
 	"encoding/pem"
 	"time"
@@ -240,7 +242,17 @@ func (id *signingidentity) Sign(msg []byte) ([]byte, error) {
 	mspIdentityLogger.Debugf("Sign: digest: %X \n", digest)
 
 	// Sign
-	return id.signer.Sign(rand.Reader, digest, nil)
+	//return id.signer.Sign(rand.Reader, digest, nil)
+	switch id.signer.Public().(type){
+	case *rsa.PublicKey:
+		return id.signer.Sign(rand.Reader, digest,&rsa.PSSOptions{SaltLength: rsa.PSSSaltLengthEqualsHash, Hash: crypto.SHA256})
+	case *ecdsa.PublicKey:
+		return id.signer.Sign(rand.Reader, digest, nil)
+	case *sm2.PublicKey:
+		return id.signer.Sign(rand.Reader,digest,nil)
+	default:
+		return id.signer.Sign(rand.Reader, digest, nil)
+	}
 }
 
 // GetPublicVersion returns the public version of this identity,

@@ -9,6 +9,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
+	"github.com/tjfoc/gmsm/sm2"
 	"os"
 	"path/filepath"
 	"testing"
@@ -127,6 +128,44 @@ func TestGetECPublicKey(t *testing.T) {
 		pubKey:    &mockKey{},
 	}
 	_, err = csp.GetECPublicKey(priv)
+	assert.EqualError(t, err, "pubKeyErr", "Expected pubKeyErr")
+
+	cleanup(testDir)
+}
+
+func TestGetSM2PublicKey(t *testing.T) {
+
+	priv, _, err := csp.GeneratePrivateKey(testDir)
+	assert.NoError(t, err, "Failed to generate private key")
+
+	sm2PubKey, err := csp.GetSM2PublicKey(priv)
+	assert.NoError(t, err, "Failed to get public key from private key")
+	assert.IsType(t, &sm2.PublicKey{}, sm2PubKey,
+		"Failed to return an sm2.PublicKey")
+
+	// force errors using mockKey
+	priv = &mockKey{
+		pubKeyErr: nil,
+		bytesErr:  nil,
+		pubKey:    &mockKey{},
+	}
+	_, err = csp.GetSM2PublicKey(priv)
+	assert.Error(t, err, "Expected an error with a invalid pubKey bytes")
+	priv = &mockKey{
+		pubKeyErr: nil,
+		bytesErr:  nil,
+		pubKey: &mockKey{
+			bytesErr: errors.New("bytesErr"),
+		},
+	}
+	_, err = csp.GetSM2PublicKey(priv)
+	assert.EqualError(t, err, "bytesErr", "Expected bytesErr")
+	priv = &mockKey{
+		pubKeyErr: errors.New("pubKeyErr"),
+		bytesErr:  nil,
+		pubKey:    &mockKey{},
+	}
+	_, err = csp.GetSM2PublicKey(priv)
 	assert.EqualError(t, err, "pubKeyErr", "Expected pubKeyErr")
 
 	cleanup(testDir)

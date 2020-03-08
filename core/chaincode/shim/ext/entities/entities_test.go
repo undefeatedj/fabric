@@ -8,6 +8,8 @@ package entities
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/tjfoc/gmsm/sm4"
 	"testing"
 
 	"github.com/hyperledger/fabric/bccsp/factory"
@@ -237,4 +239,51 @@ func TestNewECDSASignVerify(t *testing.T) {
 	assert.True(t, ePvt.Equals(ePub))
 	assert.True(t, ePvt.Equals(ePub1))
 	assert.True(t, ePub.Equals(ePub1))
+}
+
+
+//gmsm4_encrypt_entity_test
+/*const (
+	GMSM4_KEY = "0123456789012345" //16 byte
+	CLEAR_TEXT = "0123456789012346" // 16 byte
+)
+func TestNewGMSM4EncrypterEntity(t *testing.T) {
+	factory.InitFactories(nil)
+
+	ent, err := NewGMSM4EncrypterEntity("ID", factory.GetDefault(), []byte(GMSM4_KEY))
+	assert.NoError(t, err)
+	//这里必须注意 m必须是16字节的 不然会越界->参考sm4_test.go
+	m := []byte(CLEAR_TEXT)
+	fmt.Println("明文：",m)
+	//加密
+	c, err := ent.Encrypt(m)
+	fmt.Println("密文：",c)
+	//解密
+	m1, err := ent.Decrypt(c)
+	fmt.Println("解密后的明文:",m1)
+	//判断解密后的明文是否和初始化明文相等 相等返回true
+	println(bytes.Equal(m1,m))
+
+}*/
+
+func TestNewGMSM4EncrypterEntity(t *testing.T) {
+	factory.InitFactories(nil)
+
+	iv := make([]byte, sm4.BlockSize)
+
+	ent, err := NewGMSM4EncrypterEntity("ID", factory.GetDefault(), []byte("1234567890abcdef"),iv)
+	assert.NoError(t, err)
+
+	m := []byte("software of tongji university")
+
+	c, err := ent.Encrypt(m)
+	assert.NoError(t, err)
+	m1, err := ent.Decrypt(c)
+	assert.NoError(t, err)
+	assert.True(t, bytes.Equal(m1, m))
+
+	fmt.Printf("加密结果: %x\n", c)
+	fmt.Printf("解密结果: %x\n", m1)
+	fmt.Printf("原始数据: %x\n", m)
+
 }
